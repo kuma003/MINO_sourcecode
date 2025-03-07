@@ -88,6 +88,7 @@ async def send_data():
                     }
                     if counter % 10 == 0:
                         detect_cone()
+                        print("cone_detection", detector.is_detected)
                         data.update(
                             {
                                 "img": encoded_img_txt,
