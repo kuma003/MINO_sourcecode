@@ -60,6 +60,7 @@ async def send_data():
                     calc_distance()
                     time.time_ns()
                     data = {
+                        "time": time.time_ns(),
                         "lat": lat,
                         "lng": lng,
                         "acc": acc,
