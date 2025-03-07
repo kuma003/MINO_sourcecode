@@ -46,9 +46,15 @@ def get_BMX055_data():
     global gyro
     global mag
 
-    acc = bmx.getAcc()
-    gyro = bmx.getGyro()
-    mag = bmx.getMag()
+    try:
+        acc = bmx.getAcc()
+        gyro = bmx.getGyro()
+        mag = bmx.getMag()
+    except IOError as e:
+        print(f"I/O error({e.errno}): {e.strerror} was occurred")
+        bmx.__del__()  # remove instance
+        bmx = BMX055.BMX055()
+        bmx.setUp()
 
 
 def calc_distance():
