@@ -95,7 +95,9 @@ async def send_data():
                                 "cone_probability": detector.probability,
                                 "cone_occupancy": detector.occupancy,
                                 "cone_detected": detector.detected.tolist(),
-                                "is_detected": detector.is_detected,
+                                "is_detected": bool(
+                                    detector.is_detected
+                                ),  # bool型に変換
                             }
                         )
                     counter += 1
