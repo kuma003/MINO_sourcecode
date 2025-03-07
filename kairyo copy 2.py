@@ -19,9 +19,17 @@ from picamera2 import Picamera2
 # import matplotlib.pyplot as plt
 import RPi.GPIO as GPIO
 import sys
+import websockets
+import cv2
+import base64
 
 
 # 定数　上書きしない
+PORT = 8756
+SERVER_URL = "192.168.127.98"
+URI = f"ws://{SERVER_URL}:{PORT}"
+JPEG_QUALITY = 70  # 圧縮品質 (0-100)
+ENCODE_PARAM = [int(cv2.IMWRITE_JPEG_QUALITY), JPEG_QUALITY]
 MAG_CONST = 8.9  # 地磁気補正用の偏角
 CALIBRATION_MILLITIME = 20 * 1000
 TARGET_LAT = 38.260720666666664
@@ -49,6 +57,7 @@ calibRange = [1.0, 1.0, 1.0]
 lat = 0.0  # from GPS sensor
 lng = 0.0
 alt = 0.0
+fall = 0.0
 maxAlt = 0.0
 minAlt = 0.0
 pres = 0.0
@@ -65,7 +74,7 @@ restTime = 0.0
 diff_rot = 1
 upside_down_Flag = 0  # judge the upside down by acc(bmx)
 stuck_GPS_Flag = 0  # judge the stuck by GPS : no obstacle distance_Flag = 0, if CanSat stucked distance_Flag = 1
-
+encoded_img_txt = None
 
 bmx = BMX055.BMX055()
 # bmp = BMP085.BMP085()
@@ -236,6 +245,60 @@ def Setup():
     detector.set_roi_img(roi_img)
 
     print("Setup OK")
+
+
+async def setData():
+    counter = 0
+    while True:
+        try:
+            print("connecting to server")
+            async with websockets.connect(URI) as websocket:
+                data = {
+                    "time": currentMilliTime(),
+                    "phase": round(phase, 1),
+                    "acc": acc,
+                    "gyro": gyro,
+                    "mag": mag,
+                    "lat": lat,
+                    "lng": lng,
+                    "alt": alt,
+                    "distance": distance,
+                    "azimuth": azimuth,
+                    "angle": angle,
+                    "direction": direction,
+                    "fall": fall,
+                }
+                if phase >= 4 and encoded_img_txt is not None and counter % 10 == 0:
+                    data.update(
+                        {
+                            "img": encoded_img_txt,
+                            "cone_direction": cone_direction,
+                            "cone_probability": cone_probability,
+                            "cone_occupancy": detector.occupancy,
+                            "cone_detected": detector.detected.tolist(),
+                            "is_detected": bool(detector.is_detected),  # bool型に変換
+                        }
+                    )
+                    counter += 1
+                data = json.dumps(data)
+                try:
+                    await websocket.send(data)
+                except Exception as e:
+                    print(f"データ送信中にエラー発生: {e}")
+                    break
+                await asyncio.sleep(DATA_SAMPLING_RATE)
+        except websockets.exceptions.ConnectionClosedOK:
+            print("接続が正常に閉じられました。1秒後に再接続します...")
+            await asyncio.sleep(1)
+        except (
+            websockets.exceptions.ConnectionClosedError,
+            ConnectionRefusedError,
+        ) as e:
+            print(f"Connection lost: {e}, retrying in 1 second...")
+            await asyncio.sleep(1)
+        except Exception as e:
+            print(f"予期せぬエラーが発生しました: {e}")
+            await asyncio.sleep(0.1)
 
 
 def getBmxData():  # get BMX data
@@ -413,12 +476,13 @@ def cone_detect():
     global detector
     global cone_direction
     global cone_probability
+    global encoded_img_txt
 
     detector.detect_cone()
     cone_direction = 1 - detector.cone_direction
     cone_probability = detector.probability
-    print("direction", cone_direction)
-    print("prob.", cone_probability)
+    _, buffer = cv2.imencode(".jpg", detector.input_img, ENCODE_PARAM)
+    encoded_img_txt = base64.b64encode(buffer).decode("utf-8")
 
 
 def setData_thread():

@@ -1,3 +1,4 @@
+import json
 import serial
 import time
 import math
@@ -19,15 +20,24 @@ from picamera2 import Picamera2
 # import matplotlib.pyplot as plt
 import RPi.GPIO as GPIO
 import sys
+import asyncio
+import websockets
+import cv2
+import base64
 
 
 # 定数　上書きしない
+PORT = 8756
+SERVER_URL = "192.168.127.98"
+URI = f"ws://{SERVER_URL}:{PORT}"
+JPEG_QUALITY = 70  # 圧縮品質 (0-100)
+ENCODE_PARAM = [int(cv2.IMWRITE_JPEG_QUALITY), JPEG_QUALITY]
 MAG_CONST = 8.9  # 地磁気補正用の偏角
 CALIBRATION_MILLITIME = 20 * 1000
 TARGET_LAT = 38.260720666666664
 TARGET_LNG = 140.85434316666667
 TARGET_ALTITUDE = 20
-DATA_SAMPLING_RATE = 0.00001
+DATA_SAMPLING_RATE = 0.001
 ALTITUDE_CONST1 = 30
 ALTITUDE_CONST2 = 5
 HIGH = 1
@@ -74,7 +84,7 @@ nowTime = datetime.datetime.now()
 fileName = "./log/testlog_" + nowTime.strftime("%Y-%m%d-%H%M%S") + ".csv"
 
 
-def main():
+async def main():
     global phase
     global restTime
     global start
@@ -83,8 +93,6 @@ def main():
     time_camera_detecting = 0
     n_camera_mode = 0
 
-    GPIO.setwarnings(False)
-    Setup()
     phase = 0
     n = 0
 
@@ -97,18 +105,18 @@ def main():
                 # print(fall)
                 if fall > 15:
                     print("para released")
-                    time.sleep(10)
+                    await asyncio.sleep(10)
                     break
                 if time.time() - start > 5 * 60:
                     phase = 1
-                # time.sleep(0.1)
+                await asyncio.sleep(0.1)
             phase = 1
 
         elif phase == 1:  # パラ分離
             print("phase1 : remove para")
             print("fire")
             GPIO.output(heating_wire, GPIO.HIGH)
-            time.sleep(3)
+            await asyncio.sleep(3)
             GPIO.output(heating_wire, GPIO.LOW)
             print("done")
             phase = 2
@@ -160,7 +168,7 @@ def main():
 
         elif phase == 6:
             print("phase6 : Goal")
-            time.sleep(10000)
+            await asyncio.sleep(10000)
         #         elif phase==-1:
         #             print("phase-1 : stuck")
         #             if object_distance_Flag ==0:
@@ -176,7 +184,7 @@ def main():
         #                 phase = 3
         #
 
-        time.sleep(0.1)
+        asyncio.sleep(0.1)
 
 
 def currentMilliTime():
@@ -221,9 +229,9 @@ def Setup():
     getThread.daemon = True
     getThread.start()
 
-    dataThread = threading.Thread(target=setData_thread, args=())
-    dataThread.daemon = True
-    dataThread.start()
+    # dataThread = threading.Thread(target=setData_thread, args=())
+    # dataThread.daemon = True
+    # dataThread.start()
 
     gpsThread = threading.Thread(target=GPS_thread, args=())
     gpsThread.daemon = True
@@ -413,47 +421,99 @@ def cone_detect():
     global detector
     global cone_direction
     global cone_probability
+    global encoded_img_txt
 
     detector.detect_cone()
     cone_direction = 1 - detector.cone_direction
     cone_probability = detector.probability
-    print("direction", cone_direction)
-    print("prob.", cone_probability)
+    _, buffer = cv2.imencode(".jpg", detector.input_img, ENCODE_PARAM)
+    encoded_img_txt = base64.b64encode(buffer).decode("utf-8")
+    # print("direction", cone_direction)
+    # print("prob.", cone_probability)
 
 
-def setData_thread():
+async def setData():
+    counter = 0
     while True:
-        getBmxData()
-        calcAngle()
-        calcAzimuth()
-        set_direction()
-        calcdistance()
-        with open(fileName, "a", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(
-                [
-                    currentMilliTime(),
-                    round(phase, 1),
-                    acc[0],
-                    acc[1],
-                    acc[2],
-                    gyro[0],
-                    gyro[1],
-                    gyro[2],
-                    mag[1],
-                    mag[1],
-                    mag[2],
-                    lat,
-                    lng,
-                    alt,
-                    distance,
-                    azimuth,
-                    angle,
-                    direction,
-                    fall,
-                ]
-            )
-        time.sleep(DATA_SAMPLING_RATE)
+        try:
+            print("connecting to server")
+            async with websockets.connect(URI) as websocket:
+                getBmxData()
+                calcAngle()
+                calcAzimuth()
+                set_direction()
+                calcdistance()
+                with open(fileName, "a", newline="") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(
+                        [
+                            currentMilliTime(),
+                            round(phase, 1),
+                            acc[0],
+                            acc[1],
+                            acc[2],
+                            gyro[0],
+                            gyro[1],
+                            gyro[2],
+                            mag[1],
+                            mag[1],
+                            mag[2],
+                            lat,
+                            lng,
+                            alt,
+                            distance,
+                            azimuth,
+                            angle,
+                            direction,
+                            fall,
+                        ]
+                    )
+                data = {
+                    "time": currentMilliTime(),
+                    "phase": round(phase, 1),
+                    "acc": acc,
+                    "gyro": gyro,
+                    "mag": mag,
+                    "lat": lat,
+                    "lng": lng,
+                    "alt": alt,
+                    "distance": distance,
+                    "azimuth": azimuth,
+                    "angle": angle,
+                    "direction": direction,
+                    "fall": fall,
+                }
+                if phase >= 4 and encoded_img_txt is not None and counter % 10 == 0:
+                    data.update(
+                        {
+                            "img": encoded_img_txt,
+                            "cone_direction": cone_direction,
+                            "cone_probability": cone_probability,
+                            "cone_occupancy": detector.occupancy,
+                            "cone_detected": detector.detected.tolist(),
+                            "is_detected": bool(detector.is_detected),  # bool型に変換
+                        }
+                    )
+                    counter += 1
+                data = json.dumps(data)
+                try:
+                    await websocket.send(data)
+                except Exception as e:
+                    print(f"データ送信中にエラー発生: {e}")
+                    break
+                await asyncio.sleep(DATA_SAMPLING_RATE)
+        except websockets.exceptions.ConnectionClosedOK:
+            print("接続が正常に閉じられました。1秒後に再接続します...")
+            await asyncio.sleep(1)
+        except (
+            websockets.exceptions.ConnectionClosedError,
+            ConnectionRefusedError,
+        ) as e:
+            print(f"Connection lost: {e}, retrying in 1 second...")
+            await asyncio.sleep(1)
+        except Exception as e:
+            print(f"予期せぬエラーが発生しました: {e}")
+            await asyncio.sleep(0.1)
 
 
 def moveMotor_thread():
@@ -576,5 +636,9 @@ def set_direction():  # -180<direction<180  #rover move to right while direction
 
 
 if __name__ == "__main__":
-    main()
+    GPIO.setwarnings(False)
+    Setup()
+    loop = asyncio.get_event_loop()
+    tasks = [setData(), main()]
+    loop.run_until_complete(asyncio.gather(*tasks))
     time.sleep(100)
