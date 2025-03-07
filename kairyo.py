@@ -109,7 +109,7 @@ async def main():
                     break
                 if time.time() - start > 5 * 60:
                     phase = 1
-                asyncio.sleep(0)
+                await asyncio.sleep(0)
             phase = 1
 
         elif phase == 1:  # パラ分離
