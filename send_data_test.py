@@ -45,6 +45,7 @@ def get_BMX055_data():
     global acc
     global gyro
     global mag
+    global bmx
 
     try:
         acc = bmx.getAcc()
