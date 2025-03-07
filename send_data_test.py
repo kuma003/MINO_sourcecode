@@ -70,6 +70,7 @@ async def send_data():
                     }
                     data = json.dumps(data)
                     await websocket.send(data)
+                    await asyncio.sleep(0.1)  # 非同期で待機
         except (websockets.exceptions.ConnectionClosedError, ConnectionRefusedError):
             print("Connection lost, retrying in 1 second...")
             await asyncio.sleep(1)  # 非同期で待機
