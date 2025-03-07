@@ -16,7 +16,7 @@ try:
         cone_probability = detector.probability
         print(cone_direction, cone_probability)
         print("is detected: ", detector.detected)
-        if detector.detected:
+        if detector.is_detected:
             print("--------------------------------")
             print("cone detected!!")
             print("--------------------------------")
