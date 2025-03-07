@@ -112,7 +112,7 @@ async def main():
                     break
                 if time.time() - start > 5 * 60:
                     phase = 1
-                # await asyncio.sleep(0.1)
+                await asyncio.sleep(0.01)
             phase = 1
 
         elif phase == 1:  # パラ分離
@@ -645,6 +645,6 @@ if __name__ == "__main__":
     GPIO.setwarnings(False)
     Setup()
     loop = asyncio.get_event_loop()
-    tasks = [setData(), main()]
+    tasks = [main(), setData()]
     loop.run_until_complete(asyncio.gather(*tasks))
     time.sleep(100)
