@@ -88,11 +88,13 @@ class detector:
 
         occupacies = stats[:, cv2.CC_STAT_AREA] / imgSize  # 検知領域占有率
 
+        print(occupacies)
+
         idx_cone = np.argmax(occupacies) if np.max(occupacies) > 1 / 20000 else -1
 
-        self.is_detected = np.max(occupacies) > 1 / 20000
+        self.is_detected = np.max(occupacies) > (1 / 20000)
 
-        if np.max(occupacies) > 1 / 5:
+        if np.max(occupacies) > (1 / 5):
             self.is_reached = True
             self.picam2.capture_file("./log/capture_img.png")
         else:
@@ -116,8 +118,8 @@ class detector:
         #     self.is_reached = False
         #     idx_cone = np.argmin(probabilities)  # 最も形の領域を探す
 
-        self.occupancy = occupacies[idx_cone]
         # 見つかったコーンの諸情報を入力
+        self.occupancy = occupacies[idx_cone]
         self.detected = stats[idx_cone, :]
         self.centroids = centroids[idx_cone]
         self.probability = probabilities[idx_cone]
