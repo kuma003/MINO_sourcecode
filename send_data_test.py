@@ -88,13 +88,15 @@ async def send_data():
                     }
                     if counter % 10 == 0:
                         detect_cone()
-                        data += {
-                            "img": encoded_img_txt,
-                            "cone_direction": detector.cone_direction,
-                            "cone_probability": detector.probability,
-                            "cone_occupancy": detector.occupancy,
-                            "cone_detected": detector.detected,
-                        }
+                        data.update(
+                            {
+                                "img": encoded_img_txt,
+                                "cone_direction": detector.cone_direction,
+                                "cone_probability": detector.probability,
+                                "cone_occupancy": detector.occupancy,
+                                "cone_detected": detector.detected,
+                            }
+                        )
                     counter += 1
 
                     data = json.dumps(data)

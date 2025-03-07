@@ -142,7 +142,6 @@ def main():
                 phase = 5
             if n > 5:
                 phase = 6
-
         elif phase == 5:
             print("phase5")
             while True:
