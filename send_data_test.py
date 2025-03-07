@@ -65,6 +65,8 @@ async def send_data():
                         "acc": acc,
                         "gyro": gyro,
                         "mag": mag,
+                        "azimuth": 0,
+                        "angle": 0,
                         "distance": distance,
                         "gps_detect": gps_detect,
                     }
