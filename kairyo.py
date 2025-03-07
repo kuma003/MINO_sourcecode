@@ -24,8 +24,8 @@ import sys
 # 定数　上書きしない
 MAG_CONST = 8.9  # 地磁気補正用の偏角
 CALIBRATION_MILLITIME = 20 * 1000
-TARGET_LAT = 38.260720666666664
-TARGET_LNG = 140.85434316666667
+TARGET_LAT = 30.681054666666668
+TARGET_LNG = 131.06133216666666
 TARGET_ALTITUDE = 20
 DATA_SAMPLING_RATE = 0.00001
 ALTITUDE_CONST1 = 30
@@ -145,9 +145,10 @@ def main():
                 cone_detect()
                 time_camera_detecting = time.time()
                 if (
-                    time_camera_detecting - time_camera_start >= 60
+                    time_camera_detecting - time_camera_start >= 10
                 ):  # camera mode failed
                     n_camera_mode += 1
+                    print("n camera mode", n_camera_mode)
                     phase = 3  # restart GPS mode
                     break
                 if detector.is_reached:  # if rover reached cone
@@ -415,8 +416,12 @@ def cone_detect():
     global cone_probability
 
     detector.detect_cone()
-    cone_direction = 1 - detector.cone_direction
-    cone_probability = detector.probability
+    try:
+        cone_direction = 1 - detector.cone_direction
+        cone_probability = detector.probability
+    except:
+        cone_direction = 0.5
+        cone_probability = 10
     print("direction", cone_direction)
     print("prob.", cone_probability)
 
@@ -493,7 +498,7 @@ def moveMotor_thread():
             M4A_pwm.ChangeDutyCycle(50 * slow)
             M4B_pwm.ChangeDutyCycle(0)
         elif direction == -400.0:  # rotate
-            M1A_pwm.ChangeDutyCycle(25)
+            M1A_pwm.ChangeDutyCycle(15)
             M1B_pwm.ChangeDutyCycle(0)
             M4A_pwm.ChangeDutyCycle(50)
             M4B_pwm.ChangeDutyCycle(0)
