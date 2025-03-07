@@ -75,7 +75,6 @@ class detector:
     # ラベリング処理によって, 特定の比の長方形 (i.e. カラーコーン) を探し, その重心と確からしさを返す
     # 確からしさ abs(長方形の縦横比 - コーンの縦横比) でとりあえず定義. 小さいほど良い
     def __find_cone_centroid(self):
-        error_val = 10000  # 不正な値
         imgSize = len(self.binarized_img) * len(self.binarized_img[0])
         nlabels, labels_img, stats, centroids = cv2.connectedComponentsWithStats(
             self.binarized_img.astype(np.uint8)
@@ -86,11 +85,10 @@ class detector:
         self.is_detected = False
         idx_cone = -1  # コーンの要素番号
 
-        occupacies = stats[:, cv2.CC_STAT_AREA] / imgSize  # 検知領域占有率
-
-        print(occupacies)
+        occupacies = stats[1:, cv2.CC_STAT_AREA] / imgSize  # 検知領域占有率
 
         idx_cone = np.argmax(occupacies) if np.max(occupacies) > 1 / 20000 else -1
+        idx_cone += 1  # 0番目は背景なので1を足す
 
         self.is_detected = np.max(occupacies) > (1 / 20000)
 
