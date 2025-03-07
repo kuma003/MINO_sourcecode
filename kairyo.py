@@ -443,31 +443,31 @@ async def setData():
                 calcAzimuth()
                 set_direction()
                 calcdistance()
-                with open(fileName, "a", newline="") as f:
-                    writer = csv.writer(f)
-                    writer.writerow(
-                        [
-                            currentMilliTime(),
-                            round(phase, 1),
-                            acc[0],
-                            acc[1],
-                            acc[2],
-                            gyro[0],
-                            gyro[1],
-                            gyro[2],
-                            mag[1],
-                            mag[1],
-                            mag[2],
-                            lat,
-                            lng,
-                            alt,
-                            distance,
-                            azimuth,
-                            angle,
-                            direction,
-                            fall,
-                        ]
-                    )
+                # with open(fileName, "a", newline="") as f:
+                #     writer = csv.writer(f)
+                #     writer.writerow(
+                #         [
+                #             currentMilliTime(),
+                #             round(phase, 1),
+                #             acc[0],
+                #             acc[1],
+                #             acc[2],
+                #             gyro[0],
+                #             gyro[1],
+                #             gyro[2],
+                #             mag[1],
+                #             mag[1],
+                #             mag[2],
+                #             lat,
+                #             lng,
+                #             alt,
+                #             distance,
+                #             azimuth,
+                #             angle,
+                #             direction,
+                #             fall,
+                #         ]
+                #     )
                 data = {
                     "time": currentMilliTime(),
                     "phase": round(phase, 1),
