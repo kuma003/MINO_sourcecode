@@ -15,7 +15,9 @@ try:
         cone_direction = detector.cone_direction
         cone_probability = detector.probability
         print(cone_direction, cone_probability)
-        print("is detected: ", detector.detected)
+        if detector.is_detected:
+            print(f"occupied: {detector.occupancy}")
+
         if detector.is_reached:
             print("--------------------------------")
             print("cone reached!!")
