@@ -54,13 +54,11 @@ async def send_data():
             print("Connecting to server")
             async with websockets.connect(URI) as websocket:
                 while True:
-                    acc = bmx.getAcc()
-                    gyro = bmx.getGyro()
-                    mag = bmx.getMag()
+                    get_BMX055_data()  # 関数を使用してセンサーデータを取得
                     calc_distance()
-                    time.time_ns()
+                    current_time = time.time_ns()
                     data = {
-                        "time": time.time_ns(),
+                        "time": current_time,
                         "lat": lat,
                         "lng": lng,
                         "acc": acc,
@@ -72,11 +70,24 @@ async def send_data():
                         "gps_detect": gps_detect,
                     }
                     data = json.dumps(data)
-                    await websocket.send(data)
+                    try:
+                        await websocket.send(data)
+                    except Exception as e:
+                        print(f"データ送信中にエラー発生: {e}")
+                        break  # 内部ループを抜ける
                     await asyncio.sleep(0.1)  # 非同期で待機
-        except (websockets.exceptions.ConnectionClosedError, ConnectionRefusedError):
-            print("Connection lost, retrying in 1 second...")
-            await asyncio.sleep(1)  # 非同期で待機
+        except websockets.exceptions.ConnectionClosedOK:
+            print("接続が正常に閉じられました。1秒後に再接続します...")
+            await asyncio.sleep(1)
+        except (
+            websockets.exceptions.ConnectionClosedError,
+            ConnectionRefusedError,
+        ) as e:
+            print(f"Connection lost: {e}, retrying in 1 second...")
+            await asyncio.sleep(1)
+        except Exception as e:
+            print(f"予期せぬエラーが発生しました: {e}")
+            await asyncio.sleep(1)
 
 
 def GPS_thread():  # GPSモジュールを読み、GPSオブジェクトを更新する
