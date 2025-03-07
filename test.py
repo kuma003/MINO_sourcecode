@@ -99,8 +99,8 @@ def main():
             start = time.time()
             while True:
                 getBmxData()
-                print(fall)
-                if fall > 20:
+                # print(fall)
+                if fall > 15:
                     print("para released")
                     time.sleep(10)
                     break
