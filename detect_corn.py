@@ -85,24 +85,37 @@ class detector:
         )  # 値が0に近いほどコーンらしい形状 (>=0)
         self.is_detected = False
         idx_cone = -1  # コーンの要素番号
-        # 検出された領域をそれぞれ検討 (先頭は背景全体なのでパス)
-        for idx in range(1, nlabels):
-            if (
-                stats[idx, cv2.CC_STAT_AREA] < imgSize / 20000
-            ):  # 極度に面積が小さいものはノイズと見做し不正 (閾値は要調整)
-                probabilities[idx] = error_val
-                continue
-            self.is_detected = True
-            if (
-                stats[idx, cv2.CC_STAT_AREA] > imgSize / 5
-            ):  # 入力画像のうち十分な領域を占めるなら
-                idx_cone = idx
-                self.is_reached = True
-                self.picam2.capture_file("./log/capture_img.png")
-        if not idx_cone > 0:  # もし見つからなかったら
-            self.is_reached = False
-            idx_cone = np.argmin(probabilities)  # 最も形の領域を探す
-        self.occupancy = stats[idx_cone, cv2.CC_STAT_AREA] / imgSize * 100
+
+        occupacies = stats[:, cv2.CC_STAT_AREA] / imgSize  # 検知領域占有率
+
+        idx_cone = np.argmax(occupacies) if np.max(occupacies) > 1 / 20000 else -1
+
+        if idx_cone == -1:
+            self.is_detected = False
+
+        if np.max(occupacies) > 1 / 5:
+            self.is_reached = True
+            self.picam2.capture_file("./log/capture_img.png")
+
+        # # 検出された領域をそれぞれ検討 (先頭は背景全体なのでパス)
+        # for idx in range(1, nlabels):
+        #     if (
+        #         stats[idx, cv2.CC_STAT_AREA] < imgSize / 20000
+        #     ):  # 極度に面積が小さいものはノイズと見做し不正 (閾値は要調整)
+        #         probabilities[idx] = error_val
+        #         continue
+        #     self.is_detected = True
+        #     if (
+        #         stats[idx, cv2.CC_STAT_AREA] > imgSize / 5
+        #     ):  # 入力画像のうち十分な領域を占めるなら
+        #         idx_cone = idx
+        #         self.is_reached = True
+        #         self.picam2.capture_file("./log/capture_img.png")
+        # if not idx_cone > 0:  # もし見つからなかったら
+        #     self.is_reached = False
+        #     idx_cone = np.argmin(probabilities)  # 最も形の領域を探す
+
+        self.occupancy = occupacies[idx_cone]
         # 見つかったコーンの諸情報を入力
         self.detected = stats[idx_cone, :]
         self.centroids = centroids[idx_cone]
