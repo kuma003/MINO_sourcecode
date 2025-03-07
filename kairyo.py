@@ -37,7 +37,7 @@ CALIBRATION_MILLITIME = 20 * 1000
 TARGET_LAT = 38.260720666666664
 TARGET_LNG = 140.85434316666667
 TARGET_ALTITUDE = 20
-DATA_SAMPLING_RATE = 0.00001
+DATA_SAMPLING_RATE = 0.001
 ALTITUDE_CONST1 = 30
 ALTITUDE_CONST2 = 5
 HIGH = 1
@@ -328,13 +328,13 @@ def calibration():  # calibrate BMX raw data
         if (max[0] - min[0]) > 20 and (max[2] - min[2] > 20):
             print("calibration(): Complete!")
             complete = True
-            asyncio.sleep(1)
+            time.sleep(1)
             calibBias[0] = (max[0] + min[0]) / 2
             calibBias[2] = (max[2] + min[2]) / 2
 
             calibRange[0] = (max[0] - min[0]) / 2
             calibRange[2] = (max[2] - min[2]) / 2
-            asyncio.sleep(2)
+            time.sleep(2)
 
 
 def calcdistance():  # 距離計算用関
@@ -443,31 +443,31 @@ async def setData():
                 calcAzimuth()
                 set_direction()
                 calcdistance()
-                # with open(fileName, "a", newline="") as f:
-                #     writer = csv.writer(f)
-                #     writer.writerow(
-                #         [
-                #             currentMilliTime(),
-                #             round(phase, 1),
-                #             acc[0],
-                #             acc[1],
-                #             acc[2],
-                #             gyro[0],
-                #             gyro[1],
-                #             gyro[2],
-                #             mag[1],
-                #             mag[1],
-                #             mag[2],
-                #             lat,
-                #             lng,
-                #             alt,
-                #             distance,
-                #             azimuth,
-                #             angle,
-                #             direction,
-                #             fall,
-                #         ]
-                #     )
+                with open(fileName, "a", newline="") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(
+                        [
+                            currentMilliTime(),
+                            round(phase, 1),
+                            acc[0],
+                            acc[1],
+                            acc[2],
+                            gyro[0],
+                            gyro[1],
+                            gyro[2],
+                            mag[1],
+                            mag[1],
+                            mag[2],
+                            lat,
+                            lng,
+                            alt,
+                            distance,
+                            azimuth,
+                            angle,
+                            direction,
+                            fall,
+                        ]
+                    )
                 data = {
                     "time": currentMilliTime(),
                     "phase": round(phase, 1),
