@@ -94,7 +94,7 @@ async def send_data():
                                 "cone_direction": detector.cone_direction,
                                 "cone_probability": detector.probability,
                                 "cone_occupancy": detector.occupancy,
-                                "cone_detected": detector.detected,
+                                "cone_detected": detector.detected.tolist(),
                             }
                         )
                     counter += 1
@@ -155,9 +155,8 @@ def GPS_thread():  # GPSモジュールを読み、GPSオブジェクトを更�
 def detect_cone():
     global encoded_img_txt
     detector.detect_cone()
-    detected = detector.detected
     _, buffer = cv2.imencode(".jpg", detector.input_img, ENCODE_PARAM)
-    encoded_img_txt = jpg_as_text = base64.b64encode(buffer).decode("utf-8")
+    encoded_img_txt = base64.b64encode(buffer).decode("utf-8")
     # print(cone_direction, cone_probability, cone_occupancy)
     # if detector.is_detected:
     #     print(f"occupied: {detector.occupancy}")
