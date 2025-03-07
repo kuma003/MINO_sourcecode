@@ -89,7 +89,7 @@ def main():
 
     GPIO.setwarnings(False)
     Setup()
-    phase = 2
+    phase = 0
     n = 0
 
     while True:
@@ -100,16 +100,13 @@ def main():
             while True:
                 getBmxData()
                 print(fall)
-                restTime = time.time() - start
                 if fall > 20:
                     print("para released")
                     time.sleep(10)
                     break
-                if flying() == False:
-                    break
-                if restTime > 5 * 60:
+                if time.time() - start > 5 * 60:
                     phase = 1
-                time.sleep(0.1)
+                # time.sleep(0.1)
             phase = 1
 
         elif phase == 1:  # パラ分離
