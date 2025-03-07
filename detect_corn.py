@@ -20,6 +20,7 @@ class detector:
         self.probability = None
         self.centroids = None
         self.cone_direction = None
+        self.occupancy = None
         self.is_detected = None
         self.is_reached = None
         self.picam2 = None  # camera obj.
@@ -101,6 +102,7 @@ class detector:
         if not idx_cone > 0:  # もし見つからなかったら
             self.is_reached = False
             idx_cone = np.argmin(probabilities)  # 最も形の領域を探す
+        self.occupancy = stats[idx_cone, cv2.CC_STAT_AREA] / imgSize * 100
         # 見つかったコーンの諸情報を入力
         self.detected = stats[idx_cone, :]
         self.centroids = centroids[idx_cone]
