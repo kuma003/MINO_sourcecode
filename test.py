@@ -356,7 +356,7 @@ def calcdistance():  # 距離計算用関
     dx = (math.pi / 180) * EARTH_RADIUS * (TARGET_LNG - lng)
     dy = (math.pi / 180) * EARTH_RADIUS * (TARGET_LAT - lat)
     distance = math.sqrt(dx * dx + dy * dy)
-    print(f"distance: {distance}")
+    # print(f"distance: {distance}")
 
 
 def calcAngle():  # 角度計算用関数 : north=0 east=90 west = -90
@@ -378,7 +378,7 @@ def calcAngle():  # 角度計算用関数 : north=0 east=90 west = -90
     # if angle > 180:
     #    angle -= 360
     # angle = -angle
-    print(f"angle: {angle}")
+    # print(f"angle: {angle}")
 
 
 def calcAzimuth():  # 方位角計算用関数
@@ -387,7 +387,7 @@ def calcAzimuth():  # 方位角計算用関数
     azimuth = 90 - math.degrees(math.atan2(mag[2], -mag[0]))
     azimuth %= 360.0
     azimuth *= -1  # 上のazimuthはCanSatからみた北の方位
-    print(f"azimuth: {azimuth}")
+    # print(f"azimuth: {azimuth}")
     # if mag[1] == 0.0:
     #     mag[1] = 0.0000001
     # azimuth = -(180 / math.pi) * math.atan(mag[2] / mag[1])
