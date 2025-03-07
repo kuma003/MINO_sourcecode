@@ -8,21 +8,22 @@ import csv
 import os
 import cv2
 import RPi.GPIO as GPIO
-#import wiringpi as pi
+
+# import wiringpi as pi
 import BMX055
 import BMP085
 from micropyGPS import MicropyGPS
 import detect_corn as dc
 from picamera2 import Picamera2
-#import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 import RPi.GPIO as GPIO
 import sys
 
 
 # 定数　上書きしない
-MAG_CONST=8.9  # 地磁気補正用の偏角
+MAG_CONST = 8.9  # 地磁気補正用の偏角
 CALIBRATION_MILLITIME = 20 * 1000
-MOTOR_COFFICIENT = 0.6
 TARGET_LAT = 38.260720666666664
 TARGET_LNG = 140.85434316666667
 TARGET_ALTITUDE = 20
@@ -40,8 +41,8 @@ M1B = 13
 M4A = 5
 M4B = 6
 trig_pin = 15  # GPIO 15
-#echo_pin = 14  # GPIO 14
-#speed_of_sound = 34370  # 音速（気温20℃）
+# echo_pin = 14  # GPIO 14
+# speed_of_sound = 34370  # 音速（気温20℃）
 
 # 変数
 acc = [0.0, 0.0, 0.0]
@@ -73,15 +74,11 @@ stuck_GPS_Flag = 0  # judge the stuck by GPS : no obstacle distance_Flag = 0, if
 
 
 bmx = BMX055.BMX055()
-#bmp = BMP085.BMP085()
-#servo = pigpio.pi()
+# bmp = BMP085.BMP085()
+# servo = pigpio.pi()
 
 nowTime = datetime.datetime.now()
-fileName = (
-    "./log/testlog_"
-    + nowTime.strftime("%Y-%m%d-%H%M%S")
-    + ".csv"
-)
+fileName = "./log/testlog_" + nowTime.strftime("%Y-%m%d-%H%M%S") + ".csv"
 
 
 def main():
@@ -117,9 +114,9 @@ def main():
 
         elif phase == 1:  # パラ分離
             print("phase1 : remove para")
-            #servoMotor(160)
+            # servoMotor(160)
             time.sleep(3)
-            #servoMotor(90)
+            # servoMotor(90)
             phase = 2
 
         elif phase == 2:  # キャリブレーション
@@ -129,11 +126,11 @@ def main():
 
         elif phase == 3:
             print("phase3 : GPS start")
-            #get_object_distance()
-#            if stuck == True:
-#                phase = -1
-#            if upside_down == True:
-#                phase = -2
+            # get_object_distance()
+            #            if stuck == True:
+            #                phase = -1
+            #            if upside_down == True:
+            #                phase = -2
             if distance < 1.0:  # GPS座標との距離 < m以内　　#スタック優先
                 phase = 6
             # print(distance)
@@ -194,13 +191,13 @@ def Setup():
     bmx.setUp()
 
     GPIO.setmode(GPIO.BCM)
-#    GPIO.setup(LED1, GPIO.OUT)
-#    GPIO.setup(LED2, GPIO.OUT)
-#    GPIO.setup(LED3, GPIO.OUT)
-#    GPIO.setup(trig_pin, GPIO.OUT)  # Trigピン出力モード設定
-#    GPIO.setup(echo_pin, GPIO.IN)  # Echoピン入力モード設定
+    #    GPIO.setup(LED1, GPIO.OUT)
+    #    GPIO.setup(LED2, GPIO.OUT)
+    #    GPIO.setup(LED3, GPIO.OUT)
+    #    GPIO.setup(trig_pin, GPIO.OUT)  # Trigピン出力モード設定
+    #    GPIO.setup(echo_pin, GPIO.IN)  # Echoピン入力モード設定
 
-#    servoMotor(90)
+    #    servoMotor(90)
 
     with open(fileName, "a") as f:
         writer = csv.writer(f)
@@ -236,12 +233,12 @@ def Setup():
 
     dataThread = threading.Thread(target=setData_thread, args=())
     dataThread.daemon = True
-#    dataThread.setDaemon(True)
+    #    dataThread.setDaemon(True)
     dataThread.start()
 
     gpsThread = threading.Thread(target=GPS_thread, args=())
     gpsThread.daemon = True
-#    gpsThread.setDaemon(True)
+    #    gpsThread.setDaemon(True)
     gpsThread.start()
 
     detector = dc.detector()
@@ -250,7 +247,7 @@ def Setup():
     roi_img = cv2.cvtColor(roi_img, cv2.COLOR_BGR2RGB)
     detector.set_roi_img(roi_img)
 
-#    GPIO.output(LED2, HIGH)
+    #    GPIO.output(LED2, HIGH)
     print("Setup OK")
 
 
@@ -344,7 +341,7 @@ def calibration():  # calibrate BMX raw data
             after = currentMilliTime()
         if (max[0] - min[0]) > 20 and (max[2] - min[2] > 20):
             print("calibration(): Complete!")
-#            GPIO.output(LED1, HIGH)
+            #            GPIO.output(LED1, HIGH)
             complete = True
             time.sleep(1)
             calibBias[0] = (max[0] + min[0]) / 2
@@ -352,7 +349,7 @@ def calibration():  # calibrate BMX raw data
 
             calibRange[0] = (max[0] - min[0]) / 2
             calibRange[2] = (max[2] - min[2]) / 2
-#            GPIO.output(LED1, LOW)
+            #            GPIO.output(LED1, LOW)
             time.sleep(2)
 
 
@@ -364,6 +361,7 @@ def calcdistance():  # 距離計算用関
     distance = math.sqrt(dx * dx + dy * dy)
     print(f"distance: {distance}")
 
+
 def calcAngle():  # 角度計算用関数 : north=0 east=90 west = -90
     global angle
     forEAstAngle = 0.0
@@ -373,16 +371,16 @@ def calcAngle():  # 角度計算用関数 : north=0 east=90 west = -90
     dy = (math.pi / 180) * EARTH_RADIUS * (TARGET_LAT - lat)
     angle = 90 - math.degrees(math.atan2(dy, dx))
     angle %= 360.0
-    #if dx == 0 and dy == 0:
+    # if dx == 0 and dy == 0:
     #    forEastAngle = 0.0
-    #else:
+    # else:
     #    forEastAngle = (180 / math.pi) * math.atan2(dy, dx)  # arctan
-    #angle = forEastAngle - 90
-    #if angle < -180:
+    # angle = forEastAngle - 90
+    # if angle < -180:
     #    angle += 360
-    #if angle > 180:
+    # if angle > 180:
     #    angle -= 360
-    #angle = -angle
+    # angle = -angle
     print(f"angle: {angle}")
 
 
@@ -391,7 +389,7 @@ def calcAzimuth():  # 方位角計算用関数
 
     azimuth = 90 - math.degrees(math.atan2(mag[2], -mag[0]))
     azimuth %= 360.0
-    azimuth *= -1 # 上のazimuthはCanSatからみた北の方位
+    azimuth *= -1  # 上のazimuthはCanSatからみた北の方位
     print(f"azimuth: {azimuth}")
     # if mag[1] == 0.0:
     #     mag[1] = 0.0000001
@@ -500,6 +498,7 @@ def cone_detect():
     print("direction", cone_direction)
     print("prob.", cone_probability)
 
+
 def setData_thread():
     while True:
         getBmxData()
@@ -539,7 +538,7 @@ def setData_thread():
 def moveMotor_thread():
     GPIO.setmode(GPIO.BCM)
 
- #   pi.wiringPiSetupGpio()
+    #   pi.wiringPiSetupGpio()
     GPIO.setup(M1A, GPIO.OUT)
     GPIO.setup(M1B, GPIO.OUT)
     GPIO.setup(M4A, GPIO.OUT)
@@ -562,39 +561,39 @@ def moveMotor_thread():
             M4A_pwm.ChangeDutyCycle(0)
             M4B_pwm.ChangeDutyCycle(0)
         elif direction == -360.0:  # forward
-            M1A_pwm.ChangeDutyCycle(100 * diff_rot)
+            M1A_pwm.ChangeDutyCycle(50)
             M1B_pwm.ChangeDutyCycle(0)
-            M4A_pwm.ChangeDutyCycle(100)
+            M4A_pwm.ChangeDutyCycle(50)
             M4B_pwm.ChangeDutyCycle(0)
         elif direction == -400.0:  # rotate
-            M1A_pwm.ChangeDutyCycle(30 * diff_rot)
+            M1A_pwm.ChangeDutyCycle(25)
             M1B_pwm.ChangeDutyCycle(0)
-            M4A_pwm.ChangeDutyCycle(60)
+            M4A_pwm.ChangeDutyCycle(50)
             M4B_pwm.ChangeDutyCycle(0)
         elif direction == 500.0:  # left back
             M1A_pwm.ChangeDutyCycle(0)
             M1B_pwm.ChangeDutyCycle(30)
             M4A_pwm.ChangeDutyCycle(0)
-            M4B_pwm.ChangeDutyCycle(10 * diff_rot)
+            M4B_pwm.ChangeDutyCycle(10)
         elif direction == 600.0:  # right back
             M1A_pwm.ChangeDutyCycle(0)
             M1B_pwm.ChangeDutyCycle(10)
             M4A_pwm.ChangeDutyCycle(0)
-            M4B_pwm.ChangeDutyCycle(30 * diff_rot)
+            M4B_pwm.ChangeDutyCycle(30)
         elif direction == 700:  # back
             M1A_pwm.ChangeDutyCycle(0)
-            M1B_pwm.ChangeDutyCycle(100)
+            M1B_pwm.ChangeDutyCycle(50)
             M4A_pwm.ChangeDutyCycle(0)
-            M4B_pwm.ChangeDutyCycle(100)
+            M4B_pwm.ChangeDutyCycle(50)
         elif direction > 0.0 and direction <= 180.0:  # left
-            M1A_pwm.ChangeDutyCycle((30 + MOTOR_COFFICIENT * 50) * diff_rot)
+            M1A_pwm.ChangeDutyCycle(25)
             M1B_pwm.ChangeDutyCycle(0)
-            M4A_pwm.ChangeDutyCycle(10)
+            M4A_pwm.ChangeDutyCycle(15)
             M4B_pwm.ChangeDutyCycle(0)
         elif direction < 0.0 and direction >= -180.0:  # right
-            M1A_pwm.ChangeDutyCycle(10 * diff_rot)
+            M1A_pwm.ChangeDutyCycle(15)
             M1B_pwm.ChangeDutyCycle(0)
-            M4A_pwm.ChangeDutyCycle(30 + MOTOR_COFFICIENT * 50)
+            M4A_pwm.ChangeDutyCycle(25)
             M4B_pwm.ChangeDutyCycle(0)
 
 
