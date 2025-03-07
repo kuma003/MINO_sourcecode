@@ -7,12 +7,18 @@ from micropyGPS import MicropyGPS
 import threading
 import json
 import time
+import detect_corn as dc
+import cv2
+import base64
+
 
 port = 8756
 SERVER_URL = "192.168.127.98"
 URI = f"ws://{SERVER_URL}:{port}"
 TARGET_LAT = 38.266285
 TARGET_LNG = 140.855498
+JPEG_QUALITY = 70  # 圧縮品質 (0-100)
+ENCODE_PARAM = [int(cv2.IMWRITE_JPEG_QUALITY), JPEG_QUALITY]
 
 bmx = BMX055.BMX055()
 bmx.setUp()
@@ -24,6 +30,15 @@ distance = 0.0
 acc = [0.0, 0.0, 0.0]
 gyro = [0.0, 0.0, 0.0]
 mag = [0.0, 0.0, 0.0]
+
+detector = dc.detector()
+
+roi_img = cv2.imread("./log/captured.png")
+roi_img = cv2.cvtColor(roi_img, cv2.COLOR_BGR2RGB)
+
+detector.set_roi_img(roi_img)
+
+encoded_img_txt = None
 
 
 def get_BMX055_data():
@@ -49,6 +64,8 @@ async def send_data():
     global lng
     global gps_detect
 
+    counter = 0
+
     while True:
         try:
             print("Connecting to server")
@@ -69,6 +86,17 @@ async def send_data():
                         "distance": distance,
                         "gps_detect": gps_detect,
                     }
+                    if counter % 10 == 0:
+                        detect_cone()
+                        data += {
+                            "img": encoded_img_txt,
+                            "cone_direction": detector.cone_direction,
+                            "cone_probability": detector.probability,
+                            "cone_occupancy": detector.occupancy,
+                            "cone_detected": detector.detected,
+                        }
+                    counter += 1
+
                     data = json.dumps(data)
                     try:
                         await websocket.send(data)
@@ -120,6 +148,22 @@ def GPS_thread():  # GPSモジュールを読み、GPSオブジェクトを更�
             print("None gnss value")
             continue
         gps_detect = 1
+
+
+def detect_cone():
+    global encoded_img_txt
+    detector.detect_cone()
+    detected = detector.detected
+    _, buffer = cv2.imencode(".jpg", detector.input_img, ENCODE_PARAM)
+    encoded_img_txt = jpg_as_text = base64.b64encode(buffer).decode("utf-8")
+    # print(cone_direction, cone_probability, cone_occupancy)
+    # if detector.is_detected:
+    #     print(f"occupied: {detector.occupancy}")
+
+    # if detector.is_reached:
+    #     print("--------------------------------")
+    #     print("cone reached!!")
+    #     print("--------------------------------")
 
 
 async def async_main():
