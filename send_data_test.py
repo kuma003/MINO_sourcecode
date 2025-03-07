@@ -95,6 +95,7 @@ async def send_data():
                                 "cone_probability": detector.probability,
                                 "cone_occupancy": detector.occupancy,
                                 "cone_detected": detector.detected.tolist(),
+                                "is_detected": detector.is_detected,
                             }
                         )
                     counter += 1
