@@ -9,13 +9,21 @@ import json
 import time
 
 port = 8756
-SERVER_URL = "10.225.222.96"
+SERVER_URL = "192.168.127.98"
 URI = f"ws://{SERVER_URL}:{port}"
 TARGET_LAT = 38.266285
 TARGET_LNG = 140.855498
 
 bmx = BMX055.BMX055()
 bmx.setUp()
+
+lat = 0.0
+lng = 0.0
+gps_detect = 0
+distance = 0.0
+acc = [0.0, 0.0, 0.0]
+gyro = [0.0, 0.0, 0.0]
+mag = [0.0, 0.0, 0.0]
 
 
 def get_BMX055_data():
@@ -101,10 +109,18 @@ def GPS_thread():  # GPSモジュールを読み、GPSオブジェクトを更�
 
 async def async_main():
     global lat, lng, gps_detect
+    count = 0
 
-    while True:
-        print("lat: ", lat, "lng: ", lng)
-        await asyncio.sleep(1)  # 非同期sleep
+    try:
+        while True:
+            count += 1
+            print(f"async_main実行回数: {count}")
+            print("lat: ", lat, "lng: ", lng)
+            await asyncio.sleep(1)  # 非同期sleep
+    except Exception as e:
+        print(f"async_main内でエラーが発生: {e}")
+        # エラー発生後も継続するため再帰呼び出し
+        await async_main()
 
 
 if __name__ == "__main__":
