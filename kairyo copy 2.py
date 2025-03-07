@@ -1,3 +1,5 @@
+import asyncio
+import json
 import serial
 import time
 import math
@@ -83,7 +85,7 @@ nowTime = datetime.datetime.now()
 fileName = "./log/testlog_" + nowTime.strftime("%Y-%m%d-%H%M%S") + ".csv"
 
 
-def main():
+async def main():
     global phase
     global restTime
     global start
@@ -92,8 +94,8 @@ def main():
     time_camera_detecting = 0
     n_camera_mode = 0
 
-    GPIO.setwarnings(False)
-    Setup()
+    # GPIO.setwarnings(False)
+    # Setup()
     phase = 0
     n = 0
 
@@ -106,18 +108,18 @@ def main():
                 # print(fall)
                 if fall > 15:
                     print("para released")
-                    time.sleep(10)
+                    await asyncio.sleep(10)
                     break
                 if time.time() - start > 5 * 60:
                     phase = 1
-                # time.sleep(0.1)
+                # await asyncio.sleep(0.1)
             phase = 1
 
         elif phase == 1:  # パラ分離
             print("phase1 : remove para")
             print("fire")
             GPIO.output(heating_wire, GPIO.HIGH)
-            time.sleep(3)
+            await asyncio.sleep(3)
             GPIO.output(heating_wire, GPIO.LOW)
             print("done")
             phase = 2
@@ -169,7 +171,7 @@ def main():
 
         elif phase == 6:
             print("phase6 : Goal")
-            time.sleep(10000)
+            await asyncio.sleep(10000)
         #         elif phase==-1:
         #             print("phase-1 : stuck")
         #             if object_distance_Flag ==0:
@@ -185,7 +187,7 @@ def main():
         #                 phase = 3
         #
 
-        time.sleep(0.1)
+        await asyncio.sleep(0.1)
 
 
 def currentMilliTime():
@@ -640,5 +642,9 @@ def set_direction():  # -180<direction<180  #rover move to right while direction
 
 
 if __name__ == "__main__":
-    main()
+    GPIO.setwarnings(False)
+    Setup()
+    loop = asyncio.get_event_loop()
+    tasks = [setData(), main()]
+    loop.run_until_complete(asyncio.gather(*tasks))
     time.sleep(100)
