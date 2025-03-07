@@ -100,7 +100,7 @@ class detector:
             np.argmax(occupacies) if np.max(occupacies) > 0.001 else -1
         )  # 0.001よりも大きい画像が対象
 
-        self.is_detected = idx_cone > 0
+        self.is_detected = idx_cone >= 0
 
         if np.max(occupacies) > 0.15:
             self.is_reached = True
