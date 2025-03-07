@@ -179,7 +179,7 @@ def main():
 
 
 def currentMilliTime():
-    return round(time.time() * 1000)
+    return int(time.time() * 1000)
 
 
 def Setup():
@@ -507,7 +507,7 @@ def setData_thread():
             writer.writerow(
                 [
                     currentMilliTime(),
-                    round(phase, 1),
+                    int(phase, 1),
                     acc[0],
                     acc[1],
                     acc[2],
