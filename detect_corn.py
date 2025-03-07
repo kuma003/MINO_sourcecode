@@ -83,20 +83,22 @@ class detector:
             self.is_detected = False
             self.is_reached = False
             return
+
+        labels_img = labels_img[1:, :]
+        stats = stats[1:, :]
+        centroids = centroids[1:, :]
+
         probabilities = np.abs(
             stats[:, cv2.CC_STAT_WIDTH] / stats[:, cv2.CC_STAT_HEIGHT] - self.cone_ratio
         )  # 値が0に近いほどコーンらしい形状 (>=0)
         self.is_detected = False
         idx_cone = -1  # コーンの要素番号
 
-        occupacies = (
-            stats[1:, cv2.CC_STAT_AREA] / imgSize
-        )  # 検知領域占有率 (背景(idx==1)は除く)
+        occupacies = stats[:, cv2.CC_STAT_AREA] / imgSize
 
         idx_cone = np.argmax(occupacies) if np.max(occupacies) > 1 / 20000 else -1
-        idx_cone += 1  # 0番目は背景なので1から始める
 
-        self.is_detected = np.max(occupacies) > (1 / 20000)
+        self.is_detected = idx_cone > 0
 
         if np.max(occupacies) > (1 / 5):
             self.is_reached = True
