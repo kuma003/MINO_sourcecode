@@ -90,12 +90,13 @@ class detector:
 
         idx_cone = np.argmax(occupacies) if np.max(occupacies) > 1 / 20000 else -1
 
-        if idx_cone == -1:
-            self.is_detected = False
+        self.is_detected = np.max(occupacies) > 1 / 20000
 
         if np.max(occupacies) > 1 / 5:
             self.is_reached = True
             self.picam2.capture_file("./log/capture_img.png")
+        else:
+            self.is_reached = False
 
         # # 検出された領域をそれぞれ検討 (先頭は背景全体なのでパス)
         # for idx in range(1, nlabels):
