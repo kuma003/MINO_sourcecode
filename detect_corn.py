@@ -96,11 +96,13 @@ class detector:
 
         occupacies = stats[:, cv2.CC_STAT_AREA] / imgSize
 
-        idx_cone = np.argmax(occupacies) if np.max(occupacies) > 1 / 20000 else -1
+        idx_cone = (
+            np.argmax(occupacies) if np.max(occupacies) > 0.001 else -1
+        )  # 0.001よりも大きい画像が対象
 
         self.is_detected = idx_cone > 0
 
-        if np.max(occupacies) > (1 / 5):
+        if np.max(occupacies) > 0.15:
             self.is_reached = True
             self.picam2.capture_file("./log/capture_img.png")
         else:
